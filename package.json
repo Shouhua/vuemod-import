@@ -1,0 +1,23 @@
+{
+  "name": "vuemod-import",
+  "version": "0.0.1",
+  "description": "vue2, vue3, import",
+  "main": "index.js",
+  "scripts": {
+    "dev": "DEBUG=vuemod-import tsc && node index.js ."
+  },
+  "keywords": [],
+  "author": "Shouhua Peng",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.0.0",
+    "debug": "^4.1.1",
+    "es-module-lexer": "^0.3.20",
+    "klaw-sync": "^6.0.0",
+    "magic-string": "^0.25.7",
+    "minimist": "^1.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.5"
+  }
+}
