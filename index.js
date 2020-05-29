@@ -1,13 +1,12 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
 const argv = require('minimist')(process.argv.slice(2));
-const path_1 = __importDefault(require("path"));
-const chalk_1 = __importDefault(require("chalk"));
-const klaw_sync_1 = __importDefault(require("klaw-sync"));
+import path from 'path';
+import chalk from 'chalk';
+import clawSync from 'klaw-sync';
 const debug = require('debug')('vuemod-import');
+import resolve from 'resolve';
+import { semverLte } from 'semver';
+import * as vue2Compiler from 'vue-template-compiler';
+import fs from 'fs-extra';
 function logHelp() {
     console.log(`
 Usage: vuemod-import [args] [--options]
@@ -20,7 +19,7 @@ Options:
   --version, -v              [boolean] show version
 `);
 }
-console.log(chalk_1.default.cyan(`vuemod-import v${require('./package.json').version}`));
+console.log(chalk.cyan(`vuemod-import v${require('./package.json').version}`));
 (async () => {
     const { help, h, version, v } = argv;
     if (help || h) {
@@ -32,37 +31,64 @@ console.log(chalk_1.default.cyan(`vuemod-import v${require('./package.json').ver
     }
     const options = {};
     if (argv._ && argv._[0]) {
-        options.root = path_1.default.isAbsolute(argv._[0]) ? argv._[0] : path_1.default.resolve(argv._[0]);
+        options.root = path.isAbsolute(argv._[0]) ? argv._[0] : path.resolve(argv._[0]);
     }
     debug('begin...');
     run(options);
     debug('end...');
 })();
-async function run(options) {
+const resolveFrom = (root, id) => resolve.sync(id, { basedir: root });
+let compiler;
+function resolveParser(root) {
+    let pkgPath;
     try {
-        const paths = klaw_sync_1.default(options.root, { filter: filterFn });
+        pkgPath = resolveFrom(root, 'vue/package.json');
+    }
+    catch (err) {
+        console.log(chalk.red(`[vuemod-import] ${err.message}`));
+    }
+    if (pkgPath) {
+        const vueVersion = require(pkgPath).version;
+        if (vueVersion && semverLte(vueVersion, '3.0.0')) {
+            compiler = vue2Compiler;
+        }
+        else {
+            // TODO: vue 3 compiler
+        }
+    }
+}
+function run(options) {
+    try {
+        const paths = clawSync(options.root, { filter: filterFn });
+        resolveParser(options.root);
         paths.forEach(item => console.log(item.path));
-        paths.forEach(item => {
-            if (item.path.endsWith('.html')) {
+        paths.forEach(({ p, stats }) => {
+            if (stats.isDirectory())
+                return;
+            if (p.endsWith('.html')) {
                 handleHtml();
             }
-            if (item.path.endsWith('.js')) {
+            if (p.endsWith('.js')) {
                 handleJs();
             }
-            if (item.path.endsWith('.vue')) {
-                handleVue();
+            if (p.endsWith('.vue')) {
+                handleVue(p, options);
             }
         });
     }
     catch (err) {
-        console.log(chalk_1.default.red(`[vuemod-import] ${err.message}`));
+        console.log(chalk.red(`[vuemod-import] ${err.message}`));
     }
 }
 function handleHtml() {
 }
 function handleJs() {
 }
-function handleVue() {
+async function handleVue(p, options) {
+    // compile
+    const source = await fs.readFile(p, 'utf-8');
+    const descriptor = compiler.parseComponent(source);
+    console.log(descriptor);
 }
 function filterFn({ path }) {
     if (/node_modules/.test(path)) {

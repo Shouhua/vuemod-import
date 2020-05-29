@@ -2,8 +2,9 @@
   "compilerOptions": {
     "target": "esnext",
     "moduleResolution": "node",
-    "module": "CommonJS",
-    "lib": ["ESNext"],
+    "strict": true,
+    "declaration": true,
+    "noUnusedLocals": true,
     "esModuleInterop": true
   }
 }
