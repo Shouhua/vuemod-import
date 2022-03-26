@@ -16,7 +16,7 @@
     "fs-extra": "^9.0.0",
     "klaw-sync": "^6.0.0",
     "magic-string": "^0.25.7",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "resolve": "^1.17.0",
     "semver": "^7.3.2",
     "vue-template-compiler": "^2.6.11"
